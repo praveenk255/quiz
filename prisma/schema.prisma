@@ -1,46 +1,46 @@
-generator client { provider = "prisma-client-js" }
-datasource db { provider = "sqlite"; url = "file:./dev.db" }
+// prisma/schema.prisma
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("database_url") // Set in Vercel Environment Variables
+}
 
 model User {
-  id        String   @id @default(cuid())
-  email     String   @unique
+  id        Int      @id @default(autoincrement())
   name      String?
-  password  String   // hashed
+  email     String   @unique
+  password  String
   createdAt DateTime @default(now())
-  attempts  Attempt[]
+  updatedAt DateTime @updatedAt
 }
 
 model Quiz {
-  id        String   @id @default(cuid())
-  title     String
-  csvUrl    String   @unique
+  id          Int      @id @default(autoincrement())
+  title       String
+  description String?
+  questions   Question[]
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Question {
+  id        Int      @id @default(autoincrement())
+  text      String
+  options   Option[]
+  answer    String
+  quizId    Int
+  quiz      Quiz     @relation(fields: [quizId], references: [id])
   createdAt DateTime @default(now())
-  attempts  Attempt[]
+  updatedAt DateTime @updatedAt
 }
 
-model Attempt {
-  id        String    @id @default(cuid())
-  user      User      @relation(fields: [userId], references: [id])
-  userId    String
-  quiz      Quiz      @relation(fields: [quizId], references: [id])
-  quizId    String
-  startedAt DateTime  @default(now())
-  completedAt DateTime?
-  score     Int       @default(0)
-  total     Int       @default(0)
-  accuracy  Float     @default(0)
-  answers   Answer[]
-}
-
-model Answer {
-  id           String   @id @default(cuid())
-  attempt      Attempt  @relation(fields: [attemptId], references: [id])
-  attemptId    String
-  // A "question" is defined by a hash so we can aggregate across runs even if loaded from sheets at runtime.
-  questionHash String
-  questionText String
-  section      String?
-  selectedIdx  Int?
-  correctIdx   Int
-  isCorrect    Boolean
+model Option {
+  id         Int      @id @default(autoincrement())
+  text       String
+  questionId Int
+  question   Question @relation(fields: [questionId], references: [id])
 }
